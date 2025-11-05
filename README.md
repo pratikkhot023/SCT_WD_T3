@@ -3,4 +3,6 @@ Interactive quiz quest
 
 <img width="1917" height="1011" alt="Image" src="https://github.com/user-attachments/assets/8cac6852-5370-4627-9c8c-cc026f02d93e" />
 
+<img width="1912" height="1022" alt="Image" src="https://github.com/user-attachments/assets/86efcfed-0bc1-4ddb-bcac-4b35d5db06ed" />
+
 https://github.com/user-attachments/assets/6166ded4-5d47-48b9-b387-bc7a792c4995

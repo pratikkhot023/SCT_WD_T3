@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Game</title>
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #87cefa, #1e3c72, #4b0082);
+    background-size: 400% 400%;
+    animation: gradientFlow 15s ease infinite;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .quiz-container {
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 35px 40px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(75, 0, 130, 0.4);
+    backdrop-filter: blur(12px);
+    animation: fadeIn 1.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: #e0f7ff;
+    text-shadow: 0 0 10px #87cefa, 0 0 20px #4b0082;
+  }
+
+  #question {
+    margin: 15px 0;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #d0eaff;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: linear-gradient(90deg, #1e90ff, #4b0082);
+    padding: 12px;
+    border-radius: 12px;
+    color: #e0f0ff;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+
+  .option:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px #87cefa;
+  }
+
+  .correct {
+    background: linear-gradient(90deg, #00b894, #00cec9) !important;
+    color: #fff;
+  }
+
+  .wrong {
+    background: linear-gradient(90deg, #d63031, #e17055) !important;
+    color: #fff;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-top: 20px;
+  }
+
+  .progress {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #87cefa, #1e3c72, #4b0082);
+    animation: countdown 10s linear forwards;
+  }
+
+  @keyframes countdown {
+    from { width: 100%; }
+    to { width: 0%; }
+  }
+
+  button {
+    margin-top: 25px;
+    padding: 10px 20px;
+    border: none;
+    background: linear-gradient(90deg, #1e3c72, #4b0082);
+    color: #fff;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  button:hover {
+    transform: scale(1.07);
+    box-shadow: 0 0 20px #87cefa;
+  }
+
+  #result {
+    font-size: 1.3rem;
+    margin-top: 20px;
+    color: #dfe6e9;
+    text-shadow: 0 0 10px #4b0082;
+  }
+</style>
+</head>
+<body>
+<div class="quiz-container">
+  <h1>🌌 Quiz Quest</h1>
+  <div id="question"></div>
+  <div class="options" id="options"></div>
+  <div class="progress-bar"><div class="progress" id="progress"></div></div>
+  <button id="next-btn">Next ➡️</button>
+  <div id="result"></div>
+</div>
+
+<audio id="correct-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3"></audio>
+<audio id="wrong-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-buzz-952.mp3"></audio>
+
+<script>
+const questions = [
+  {
+    question: "Which HTML tag is used to define JavaScript code?",
+    options: ["<script>", "<js>", "<javascript>", "<code>"],
+    answer: "<script>"
+  },
+  {
+    question: "Which CSS property controls background color?",
+    options: ["color", "bgcolor", "background-color", "font-style"],
+    answer: "background-color"
+  },
+  {
+    question: "Which keyword is used to define a function in Python?",
+    options: ["function", "def", "lambda", "define"],
+    answer: "def"
+  },
+  {
+    question: "Which method prints output in Java?",
+    options: ["echo()", "System.out.println()", "print()", "printf()"],
+    answer: "System.out.println()"
+  },
+  {
+    question: "What does SQL stand for?",
+    options: [
+      "Simple Query Language",
+      "Structured Query Language",
+      "Standard Question Language",
+      "Sequential Query List"
+    ],
+    answer: "Structured Query Language"
+  }
+];
+
+let currentQuestion = 0;
+let score = 0;
+let timer;
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const nextBtn = document.getElementById("next-btn");
+const resultEl = document.getElementById("result");
+const progressEl = document.getElementById("progress");
+const correctSound = document.getElementById("correct-sound");
+const wrongSound = document.getElementById("wrong-sound");
+
+function startQuiz() {
+  showQuestion();
+  startTimer();
+}
+
+function showQuestion() {
+  const q = questions[currentQuestion];
+  questionEl.textContent = `Q${currentQuestion + 1}. ${q.question}`;
+  optionsEl.innerHTML = "";
+
+  q.options.forEach(opt => {
+    const btn = document.createElement("div");
+    btn.classList.add("option");
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(btn, q.answer);
+    optionsEl.appendChild(btn);
+  });
+}
+
+function selectAnswer(selected, correct) {
+  clearTimeout(timer);
+  const allOptions = document.querySelectorAll(".option");
+  allOptions.forEach(opt => opt.style.pointerEvents = "none");
+
+  if (selected.textContent === correct) {
+    selected.classList.add("correct");
+    score++;
+    correctSound.play();
+  } else {
+    selected.classList.add("wrong");
+    wrongSound.play();
+    allOptions.forEach(opt => {
+      if (opt.textContent === correct) opt.classList.add("correct");
+    });
+  }
+}
+
+function startTimer() {
+  progressEl.style.animation = "none";
+  void progressEl.offsetWidth;
+  progressEl.style.animation = "countdown 10s linear forwards";
+
+  timer = setTimeout(() => {
+    nextQuestion();
+  }, 10000);
+}
+
+nextBtn.addEventListener("click", nextQuestion);
+
+function nextQuestion() {
+  clearTimeout(timer);
+  currentQuestion++;
+  if (currentQuestion < questions.length) {
+    showQuestion();
+    startTimer();
+  } else {
+    endQuiz();
+  }
+}
+
+function endQuiz() {
+  questionEl.style.display = "none";
+  optionsEl.style.display = "none";
+  nextBtn.style.display = "none";
+  progressEl.style.display = "none";
+
+  let emoji = "😐";
+  if (score === questions.length) emoji = "🏆";
+  else if (score > questions.length / 2) emoji = "😄";
+  else emoji = "😢";
+
+  resultEl.innerHTML = `<strong>${emoji} You scored ${score}/${questions.length}</strong>`;
+}
+
+startQuiz();
+</script>
+</body>
+</html>
